@@ -1,0 +1,18 @@
+baseaddr = {
+           'p2_health':0x101F30AC,
+           'p1_health':0x101F3648,
+           'p3_health':0x101F3648
+           'p3_x':0x10155788
+           }
+
+offsets = {
+          'p2_health':[0x1258,0x400,0xB3C],
+          'p1_health':[0x2A8,0x55C,0x58,0x14,0x3FC],
+          'p3_health':[0x2A8,0x6A4]
+          'p3_x':[0x44C,0x3CC]
+          }
+          #'p3_health':[0x1A4,0xAC,0x80,0x4F8,0x6A4]}
+          #'p3_health':[0xC,0xB4,0xF0,0x4F8,0x6A4]}
+'''-0.6426766515
+-13.28003788
+'''
