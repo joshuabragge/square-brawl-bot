@@ -238,7 +238,10 @@ class Process(object):
             if module.szModule.decode('UTF-8').lower() == module_name.lower():
                 return module.modBaseAddr
 
-    def get_addr(self, baseaddr, offsets):
+    def get_addr(self, baseaddr, offsets, handle=False):
+        if handle is True:
+            mod = self.get_module_base(baseaddr[0])
+            baseaddr = mod + baseaddr[1]
         long = c_long()
         self.read_memory(baseaddr, long)
         nextaddr = long.value

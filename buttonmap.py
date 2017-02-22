@@ -31,8 +31,13 @@ wAxisX
 ------------------------
 
 '''
+# guns
+shotgun = 2
+sniper = 3
+# rgun = secondchoice
+# lgun = firstchoice
 
-#buttons
+# buttons
 none = 0
 X = 1
 A = 2
@@ -42,7 +47,7 @@ RS = 32
 LT = 64
 RT = 128
 
-#joystick
+# joystick
 xmin = 0
 xmax = 32000
 xcent = 16000
@@ -50,7 +55,7 @@ ymin = 0
 ymax = 32000
 ycent = 16000
 
-#additional
+# additional
 jump = A
 select = A
 firergun = RT
