@@ -3,6 +3,16 @@ import addresses as ad
 import cooldown as cd
 import time
 
+global p1_x
+global p1_y
+global p2_x
+global p2_y
+
+p1_x = 0
+p1_y = 0
+p2_x = 0
+p2_y = 0
+
 class Features(object):
 
     def __init__(self):
@@ -26,17 +36,42 @@ class Features(object):
     # intiate features
     def grab_features(self):
             p1h = self.process.get_feature(self.p1_health_addr)
-            time.sleep(0.01)
+
+            if p1h > 0:
+                time.sleep(0.02)
+                p1_x = self.process.get_feature(self.p1_x_addr)
+                time.sleep(0.02)
+                p1_y = self.process.get_feature(self.p1_y_addr)
+            else:
+                p1_x = 0
+                p1_y = 0
+            time.sleep(0.02)
             p2h = self.process.get_feature(self.p2_health_addr)
-            time.sleep(0.01)
-            p1_x = self.process.get_feature(self.p1_x_addr)
-            time.sleep(0.01)
-            p1_y = self.process.get_feature(self.p1_y_addr)
-            time.sleep(0.01)
-            p2_x = self.process.get_feature(self.p2_x_addr)
-            time.sleep(0.01)
-            p2_y = self.process.get_feature(self.p2_y_addr)
+
+            if p2h > 0:
+                time.sleep(0.02)
+                p2_x = self.process.get_feature(self.p2_x_addr)
+                time.sleep(0.0)
+                p2_y = self.process.get_feature(self.p2_y_addr)
+            else:
+                p2_x = 0
+                p2_y = 0
+
             features = [p1h, p1_x, p1_y,
                         p2h, p2_x, p2_y,
                         cd.gunonetimer, cd.guntwotimer]
             return features
+
+    def testp1(self):
+        p1_y = self.process.get_feature(self.p1_y_addr)
+        time.sleep(0.02)
+        p1_x = self.process.get_feature(self.p1_x_addr)
+        time.sleep(0.02)
+        return print("(", p1_x, ",", p1_y, ")")
+
+    def testp2(self):
+        p2_x = self.process.get_feature(self.p2_x_addr)
+        time.sleep(0.02)
+        p2_y = self.process.get_feature(self.p2_y_addr)
+        time.sleep(0.01)
+        return print("(", p2_x, ",", p2_y, ")")
