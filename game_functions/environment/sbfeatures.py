@@ -86,6 +86,7 @@ class Environment(object):
             p2h = self.process.get_feature(self.p2_health_addr)
 
             if self.switch is True:
+                # by switching the health we switch the rest of the features
                 p1h_t = p1h
                 p2h_t = p2h
                 p1h = p2h_t
@@ -136,7 +137,7 @@ class Environment(object):
                         self.switch = False
                     else:
                         # we know the features swapped since p1's score should have increased
-                        if self.switch is True: # incase switch is reversed busted
+                        if self.switch is True:  # incase switch is reversed busted
                             self.switch = False
                         else:
                             self.switch = True
@@ -303,41 +304,43 @@ class Environment(object):
             mvx = bm.xmax
             mvy = bm.ycent
             pb = bm.none
+            delay = delay
         elif move == 1:
             mvx = bm.xcent
             mvy = bm.ymin
             pb = bm.none
-            delay = 0.01
+            delay = delay
         elif move == 2:
             mvx = bm.xmin
             mvy = bm.ycent
             pb = bm.none
+            delay = delay
         elif move == 3:
             mvx = bm.xcent
             mvy = bm.ymax
             pb = bm.none
-            delay = 0.01
+            delay = delay
         elif move == 4:
             mvx = bm.xcent
             mvy = bm.ycent
             pb = bm.none
-            delay = 0.01
+            delay = delay
         elif move == 5:
             mvx = bm.xcent
             mvy = bm.ycent
             pb = bm.jump
-            delay = 0.01
+            delay = delay
         elif move == 6:
             mvx = bm.xcent
             mvy = bm.ycent
-            delay = 0.01
+            delay = delay
             pb = bm.firergun
             if cd.gunonetimer == 0:
                 cd.guncounterone()
         elif move == 7:
             mvx = bm.xcent
             mvy = bm.ycent
-            delay = 0.01
+            delay = delay
             pb = bm.firelgun
             if cd.guntwotimer == 0:
                 cd.guncountertwo()
@@ -345,14 +348,19 @@ class Environment(object):
             mvx = bm.xcent
             mvy = bm.ycent
             pb = bm.none
+            delay = delay
         vj.aim(x=mvx, y=mvy, button=pb, delay=delay)
         return move
 
     def reward_structure(self, p1_death, p2_death, p1_damage, p2_damage):
+        '''
+        sets how much we want to value deaths/damage
+        '''
         self.p1_death = p1_death
         self.p2_death = p2_death
         self.p1_damage = p1_damage
         self.p2_damage = p2_damage
+        return print('Reward structure defined!')
 
     def action_checker(self, action, reward, cooldownstates):
         '''
@@ -368,45 +376,33 @@ class Environment(object):
 
     def reward(self, stale_observation, new_observation):
         rewards = []
-        # p2 = enemy
         p1h_old = stale_observation[0]
         p1h_new = new_observation[0]
         p2h_old = stale_observation[3]
         p2h_new = new_observation[3]
-        cd1 = new_observation[6]
-        cd2 = new_observation[7]
         # Death Management
         try:
-            if p1h_new <= 0:
-                if self.read_p1 is False:
-                    self.read_p1 = True
-                    rewards.append(self.p1_death)
+            if p1h_new < p1h_old:
+                if p1h_new <= 0:
+                    ph1_delta = (p1h_old - 0)*self.p1_damage
+                    rewards.append(self.p1_death + ph1_delta)
                 else:
-                    rewards.append(0)
-            else:
-                # Damage Management
-                if p1h_old <= 0:
-                    rewards.append(0)
-                else:
-                    # negative if you take damage!
                     ph1_delta = (p1h_old - p1h_new)*self.p1_damage
                     rewards.append(ph1_delta)
-
-            if p2h_new <= 0:
-                if self.read_p2 is False:
-                    self.read_p2 = True
-                    rewards.append(self.p2_death)
-                else:
-                    rewards.append(0)
             else:
-                # only calculate damage to the other person if you gun is on cooldown
-                # ----- Must use guns that have cooldown ------
-                if (cd1 or cd2) != 0: # if either gun has been fired
-                    p2h_delta = (p2h_old - p2h_new)*self.p2_damage
-                    rewards.append(p2h_delta)
+                rewards.append(0)
+
+            if p2h_new < p2h_old:
+                if p2h_new <= 0:
+                    ph2_delta = (p2h_old - 0)*self.p2_damage
+                    rewards.append(self.p2_death + ph2_delta)
                 else:
-                    rewards.append(0)
-            # print(int(sum(rewards)))
+                    p2h_delta = (p2h_old - p2h_new)*self.p2_damage
+                    rewards.append(ph2_delta)
+            else:
+                rewards.append(0)
+
+            rewards.append(0)
             return sum(rewards)
         except AttributeError:
             print('Define the reward structure with reward_structure')
