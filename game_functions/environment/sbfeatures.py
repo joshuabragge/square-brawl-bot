@@ -397,7 +397,7 @@ class Environment(object):
                     ph2_delta = (p2h_old - 0)*self.p2_damage
                     rewards.append(self.p2_death + ph2_delta)
                 else:
-                    p2h_delta = (p2h_old - p2h_new)*self.p2_damage
+                    ph2_delta = (p2h_old - p2h_new)*self.p2_damage
                     rewards.append(ph2_delta)
             else:
                 rewards.append(0)
