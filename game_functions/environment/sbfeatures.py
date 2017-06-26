@@ -36,6 +36,8 @@ class Environment(object):
         self.__last_move_direction__ = 0
         self.direction = [0, 0, 0, 0]
         self.prev_coordinates = [0, 0, 0, 0]
+        self.check_p2 = True
+        self.check_p1 = True
         print('init')
 
     def make(self, delay=1):
@@ -81,9 +83,9 @@ class Environment(object):
 
     # intiate features
     def __grab_features__(self):
-            p1h = self.process.get_feature(self.p1_health_addr)
+            p2h = self.process.get_feature(self.p1_health_addr)
             time.sleep(0.01)
-            p2h = self.process.get_feature(self.p2_health_addr)
+            p1h = self.process.get_feature(self.p2_health_addr)
 
             if self.switch is True:
                 # by switching the health we switch the rest of the features
@@ -92,48 +94,55 @@ class Environment(object):
                 p1h = p2h_t
                 p2h = p1h_t
 
-            if p1h <= 0 or p2h <= 0:
+            '''if p1h <= 0 or p2h <= 0:
                 self.features = [p1h, 0, 0, p2h, 0, 0,
                                  0, 0, 0, 0, 0, 0, 0,
                                  0, 0, 0, 0, 0, 0, 0, 0, 0]
                 return self.features
+            else:'''
+
+            self.__update_score__()
+
+            # use the health to determine when to pull x&y
+            if p1h > 0:
+                time.sleep(0.01)
+                p1_x = self.process.get_feature(self.p1_x_addr)
+                time.sleep(0.01)
+                p1_y = self.process.get_feature(self.p1_y_addr)
+                self.read_p1 = False
+                p1_x = float('%.1f'%(p1_x))
+                p1_y = float('%.1f'%(p1_y))
+                p1_dead = False
+                self.check_p1 = True
             else:
+                p1_x = 0
+                p1_y = 0
+                #print('p1_dead')
+                p1_dead = True
+            # use the health to determine when to pull x&y
+            if p2h > 0:
+                time.sleep(0.01)
+                p2_x = self.process.get_feature(self.p2_x_addr)
+                time.sleep(0.01)
+                p2_y = self.process.get_feature(self.p2_y_addr)
+                self.read_p2 = False
+                p2_x = float('%.1f'%(p2_x))
+                p2_y = float('%.1f'%(p2_y))
+                p2_dead = False
+                self.check_p2 = True
+            else:
+                p2_x = 0
+                p2_y = 0
+                #print('p2_dead')
+                p2_dead = True
 
-                self.__update_score__()
-
-                # use the health to determine when to pull x&y
-                if p1h > 0:
-                    time.sleep(0.01)
-                    p1_x = self.process.get_feature(self.p1_x_addr)
-                    time.sleep(0.01)
-                    p1_y = self.process.get_feature(self.p1_y_addr)
-                    self.read_p1 = False
-                    p1_x = float('%.3f'%(p1_x))
-                    p1_y = float('%.3f'%(p1_y))
-                    p1_dead = False
-                else:
-                    p1_x = 0
-                    p1_y = 0
-                    p1_dead = True
-                # use the health to determine when to pull x&y
-                if p2h > 0:
-                    time.sleep(0.01)
-                    p2_x = self.process.get_feature(self.p2_x_addr)
-                    time.sleep(0.01)
-                    p2_y = self.process.get_feature(self.p2_y_addr)
-                    self.read_p2 = False
-                    p2_x = float('%.1f'%(p2_x))
-                    p2_y = float('%.1f'%(p2_y))
-                    p2_dead = False
-                else:
-                    p2_x = 0
-                    p2_y = 0
-                    p2_dead = True
-
+            if self.check_p2 is True:  # prevents the system from spamming switch back and for when agent is dead
+                #print('p2_check true')
                 if p2_dead is True:
-                    print('player 2 dead?')
+                    self.check_p2 = False
+                    #print('player 2 dead?')
                     if self.p1_score > self.p1_score_prev:
-                        print('apparently')
+                        #print('apparently')
                         self.switch = False
                     else:
                         # we know the features swapped since p1's score should have increased
@@ -141,12 +150,16 @@ class Environment(object):
                             self.switch = False
                         else:
                             self.switch = True
-                        print('switch!')
-                    self.p1_score_prev = self.p1_score
-                elif p1_dead is True:
-                    print('player 1 dead?')
+                            self.check_p1 = False
+                        #print('switch!')
+                    self.p2_score_prev = self.p2_score
+            if self.check_p1 is True:  # prevents the system from spamming switch back and for when agent is dead
+
+                if p1_dead is True:
+                    self.check_p1 = False
+                    #print('player 1 dead?')
                     if self.p2_score > self.p2_score_prev:
-                        print('apparently!')
+                        #print('apparently!')
                         self.switch = False
                     else:
                         # we know the features swapped since p2's score should have increased
@@ -154,27 +167,30 @@ class Environment(object):
                             self.switch = False
                         else:
                             self.switch = True
-                        print('switch')
-                    self.p2_score_prev = self.p2_score
+                            self.check_p2 = False
+                        #print('switch')
+                    self.p1_score_prev = self.p1_score
 
-                locations = self.__location_features__(p1_x, p2_x, p1_y, p2_y, self.switch)
-                current_direction = self.__update_current_direction__(self.__last_move_direction__ )
-                delta_movement = self.__movement_deltas__(p1_x, p2_x, p1_y, p2_y, self.switch)
 
-                # don't change health because changed earlier
-                if self.switch is False:
-                    self.features = [p1h, p1_x, p1_y,
-                                     p2h, p2_x, p2_y]
-                else:
-                    self.features = [p1h, p2_x, p2_y,
-                                     p2h, p1_x, p1_y]
 
-                self.features.extend(locations)
-                self.features.extend([cd.gunonetimer, cd.guntwotimer])
-                self.features.extend(current_direction)
-                self.features.extend(delta_movement)
+            locations = self.__location_features__(p1_x, p2_x, p1_y, p2_y, self.switch)
+            current_direction = self.__update_current_direction__(self.__last_move_direction__ )
+            delta_movement = self.__movement_deltas__(p1_x, p2_x, p1_y, p2_y, self.switch)
 
-                return self.features
+            # don't change health because changed earlier
+            if self.switch is False:
+                self.features = [p1h, p1_x, p1_y,
+                                 p2h, p2_x, p2_y]
+            else:
+                self.features = [p1h, p2_x, p2_y,
+                                 p2h, p1_x, p1_y]
+
+            self.features.extend(locations)
+            self.features.extend([cd.gunonetimer, cd.guntwotimer])
+            self.features.extend(current_direction)
+            self.features.extend(delta_movement)
+
+            return self.features
     # features
     def __movement_deltas__(self, p1_x, p2_x, p1_y, p2_y, switch):
         if switch is False:
@@ -397,7 +413,7 @@ class Environment(object):
                     ph2_delta = (p2h_old - 0)*self.p2_damage
                     rewards.append(self.p2_death + ph2_delta)
                 else:
-                    p2h_delta = (p2h_old - p2h_new)*self.p2_damage
+                    ph2_delta = (p2h_old - p2h_new)*self.p2_damage
                     rewards.append(ph2_delta)
             else:
                 rewards.append(0)
