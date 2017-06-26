@@ -83,9 +83,16 @@ class Environment(object):
 
     # intiate features
     def __grab_features__(self):
-            p1h = self.process.get_feature(self.p1_health_addr)
+            p2h = self.process.get_feature(self.p1_health_addr)
             time.sleep(0.01)
-            p2h = self.process.get_feature(self.p2_health_addr)
+            p1h = self.process.get_feature(self.p2_health_addr)
+
+            if self.switch is True:
+                # by switching the health we switch the rest of the features
+                p1h_t = p1h
+                p2h_t = p2h
+                p1h = p2h_t
+                p2h = p1h_t
 
             '''if p1h <= 0 or p2h <= 0:
                 self.features = [p1h, 0, 0, p2h, 0, 0,
@@ -164,12 +171,7 @@ class Environment(object):
                         #print('switch')
                     self.p1_score_prev = self.p1_score
 
-            if self.switch is True:
-                # by switching the health we switch the rest of the features
-                p1h_t = p1h
-                p2h_t = p2h
-                p1h = p2h_t
-                p2h = p1h_t
+
 
             locations = self.__location_features__(p1_x, p2_x, p1_y, p2_y, self.switch)
             current_direction = self.__update_current_direction__(self.__last_move_direction__ )
