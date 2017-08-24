@@ -1,11 +1,10 @@
 baseaddr = {
            'p1_health': 0x101F3648,
            'p2_health': 0x101F3648,
-           #'p3_health': 0x100731FC,
+
            'p3_health': ["Square Brawl.exe", 0x100ECCBE0],
            'p4_health': ["Square Brawl.exe", 0x100E5C338],
-           # 'p1_x': ["Square Brawl.exe", 0x100E04914],
-           # 'p1_y': ["Square Brawl.exe", 0x100E04914],
+           
            'p1_x': ["mono.dll", 0x1001F3648],
            'p1_y': ["mono.dll", 0x1001F3648],
 
@@ -22,7 +21,7 @@ baseaddr = {
            }
 
 offsets = {
-          'p1_health': [0x2A8, 0x55C, 0x64, 0x14, 0x3FC], #64 == 54 before June 1
+          'p1_health': [0x2A8, 0x55C, 0x64, 0x14, 0x3FC],
           'p2_health': [0x2A8, 0x55C, 0x7C, 0x14, 0x154],
 
           'p3_health': [0x11C, 0x18, 0x4C4, 0x234, 0x3FC],
@@ -42,10 +41,3 @@ offsets = {
           'p1_score': [0x0, 0x700, 0x8C, 0x494, 0x128],
           'p2_score': [0x0, 0x700, 0x8C, 0x494, 0x12C]
           }
-# 'p3_health':[0x1A4,0xAC,0x80,0x4F8,0x6A4]}
-# 'p3_health':[0xC,0xB4,0xF0,0x4F8,0x6A4]}
-'''-0.6426766515
--13.28003788
-'''
-# 'p2_health': 0x101F30AC,
-# 'p2_health': [0x1258, 0x400, 0xB3C],
