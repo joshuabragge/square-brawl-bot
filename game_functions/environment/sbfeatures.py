@@ -4,7 +4,7 @@ import random
 from game_functions.memory import memory_reader as memory
 from game_functions.memory import game_addresses as ad
 
-from game_functions.environment import gun_cooldown_timer as cooldown
+#from game_functions.environment import gun_cooldown_timer as cooldown
 
 from game_functions.game_navigation import menu_navigation as gm
 
@@ -36,6 +36,8 @@ class Environment(object):
         self.__last_move_direction__ = 0
         self.direction = [0, 0, 0, 0]
         self.prev_coordinates = [0, 0, 0, 0]
+        self.check_p2 = True
+        self.check_p1 = True
         print('init')
 
     def make(self, delay=1):
@@ -53,129 +55,146 @@ class Environment(object):
     def start_game(self, vj_mselect=vj.mselect, botsOn=False, mode='easy'):
         gm.start_game(vj_mselect, botsOn, mode='easy')
 
-    def initalize_memory(self, ):
+    def initalize_memory(self):
         self.process = memory.Process("Square Brawl")
 
     def __grab_addresses__(self):
-
+        '''
+        Collects current address of features
+        based on base address and pointers
+        '''
         self.p1_health_addr = self.process.get_addr(ad.baseaddr['p1_health'],
                                                     ad.offsets['p1_health'])
         self.p2_health_addr = self.process.get_addr(ad.baseaddr['p2_health'],
                                                     ad.offsets['p2_health'])
         self.p1_x_addr = self.process.get_addr(ad.baseaddr['p1_x'],
-                                               ad.offsets['p1_x'], handle=True)
+                                               ad.offsets['p1_x'],
+                                               handle=True)
         self.p1_y_addr = self.process.get_addr(ad.baseaddr['p1_y'],
-                                               ad.offsets['p1_y'], handle=True)
+                                               ad.offsets['p1_y'],
+                                               handle=True)
         self.p2_x_addr = self.process.get_addr(ad.baseaddr['p2_x'],
-                                               ad.offsets['p2_x'], handle=True)
+                                               ad.offsets['p2_x'],
+                                               handle=True)
         self.p2_y_addr = self.process.get_addr(ad.baseaddr['p2_y'],
-                                               ad.offsets['p2_y'], handle=True)
+                                               ad.offsets['p2_y'],
+                                               handle=True)
         self.p1_score_addr = self.process.get_addr(ad.baseaddr['p1_score'],
-                                                ad.offsets['p1_score'], handle=True)
+                                                  ad.offsets['p1_score'],
+                                                  handle=True)
         self.p2_score_addr = self.process.get_addr(ad.baseaddr['p2_score'],
-                                                ad.offsets['p2_score'], handle=True)
+                                                  ad.offsets['p2_score'],
+                                                  handle=True)
 
     def __update_score__(self):
+        '''
+        updates the internal scoreboard
+        mainly used for ensuring the features
+        are not switching in memory
+        '''
         self.p1_score = self.process.get_score(self.p1_score_addr)
         self.p2_score = self.process.get_score(self.p2_score_addr)
 
-    # intiate features
-    def __grab_features__(self):
-            p1h = self.process.get_feature(self.p1_health_addr)
+    def __grab_coordinates__(self, p1h, p1_x_addr, p1_y_addr):
+        '''
+        if the health is less than 0 player
+        is dead and x&y coordinates increase
+        randomly to large numbers
+        '''
+        if p1h > 0:
             time.sleep(0.01)
-            p2h = self.process.get_feature(self.p2_health_addr)
+            p1_x = self.process.get_feature(p1_x_addr)
+            time.sleep(0.01)
+            p1_y = self.process.get_feature(p1_y_addr)
+            self.read_p1 = False
+            p1_x = float('%.1f' % (p1_x))
+            p1_y = float('%.1f' % (p1_y))
+            p1_dead = False
+            self.check_p1 = True
+        else:
+            p1_x = 0
+            p1_y = 0
+            p1_dead = True
+        return p1_x, p1_y, p1_dead
 
-            if self.switch is True:
-                # by switching the health we switch the rest of the features
-                p1h_t = p1h
-                p2h_t = p2h
-                p1h = p2h_t
-                p2h = p1h_t
-
-            if p1h <= 0 or p2h <= 0:
-                self.features = [p1h, 0, 0, p2h, 0, 0,
-                                 0, 0, 0, 0, 0, 0, 0,
-                                 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                return self.features
-            else:
-
-                self.__update_score__()
-
-                # use the health to determine when to pull x&y
-                if p1h > 0:
-                    time.sleep(0.01)
-                    p1_x = self.process.get_feature(self.p1_x_addr)
-                    time.sleep(0.01)
-                    p1_y = self.process.get_feature(self.p1_y_addr)
-                    self.read_p1 = False
-                    p1_x = float('%.3f'%(p1_x))
-                    p1_y = float('%.3f'%(p1_y))
-                    p1_dead = False
+    def __features_switching_killswitch__(self, p2_dead):
+        '''
+        FML based on the player score
+        and which character is currently
+        dead, we check and make sure the
+        features haven't switched places
+        in memory i.e. p1 in column 1
+        becomes p2 in column 1
+        '''
+        if self.check_p2 is True:
+            # prevents the system from spamming switch
+            # back and for when agent is dead
+            if p2_dead is True:
+                self.check_p2 = False
+                if self.p1_score > self.p1_score_prev:
+                    self.switch = False
                 else:
-                    p1_x = 0
-                    p1_y = 0
-                    p1_dead = True
-                # use the health to determine when to pull x&y
-                if p2h > 0:
-                    time.sleep(0.01)
-                    p2_x = self.process.get_feature(self.p2_x_addr)
-                    time.sleep(0.01)
-                    p2_y = self.process.get_feature(self.p2_y_addr)
-                    self.read_p2 = False
-                    p2_x = float('%.1f'%(p2_x))
-                    p2_y = float('%.1f'%(p2_y))
-                    p2_dead = False
-                else:
-                    p2_x = 0
-                    p2_y = 0
-                    p2_dead = True
-
-                if p2_dead is True:
-                    print('player 2 dead?')
-                    if self.p1_score > self.p1_score_prev:
-                        print('apparently')
+                    # we know the features swapped since
+                    # p1's score should have increased
+                    if self.switch is True:
+                        # incase switch is reversed busted
                         self.switch = False
                     else:
-                        # we know the features swapped since p1's score should have increased
-                        if self.switch is True:  # incase switch is reversed busted
-                            self.switch = False
-                        else:
-                            self.switch = True
-                        print('switch!')
-                    self.p1_score_prev = self.p1_score
-                elif p1_dead is True:
-                    print('player 1 dead?')
-                    if self.p2_score > self.p2_score_prev:
-                        print('apparently!')
-                        self.switch = False
-                    else:
-                        # we know the features swapped since p2's score should have increased
-                        if self.switch is True: # incase busted
-                            self.switch = False
-                        else:
-                            self.switch = True
-                        print('switch')
-                    self.p2_score_prev = self.p2_score
+                        self.switch = True
+                        self.check_p1 = False
+                self.p2_score_prev = self.p2_score
 
-                locations = self.__location_features__(p1_x, p2_x, p1_y, p2_y, self.switch)
-                current_direction = self.__update_current_direction__(self.__last_move_direction__ )
-                delta_movement = self.__movement_deltas__(p1_x, p2_x, p1_y, p2_y, self.switch)
+    def __grab_features__(self):
+        '''
+        function to grabs the raw features from
+        memory or calls functions that create
+        extrapolated features
+        '''
+        p2h = self.process.get_feature(self.p1_health_addr)
+        time.sleep(0.01)
+        p1h = self.process.get_feature(self.p2_health_addr)
 
-                # don't change health because changed earlier
-                if self.switch is False:
-                    self.features = [p1h, p1_x, p1_y,
-                                     p2h, p2_x, p2_y]
-                else:
-                    self.features = [p1h, p2_x, p2_y,
-                                     p2h, p1_x, p1_y]
+        if self.switch is True:
+            p1h_t = p1h
+            p2h_t = p2h
+            p1h = p2h_t
+            p2h = p1h_t
 
-                self.features.extend(locations)
-                self.features.extend([cd.gunonetimer, cd.guntwotimer])
-                self.features.extend(current_direction)
-                self.features.extend(delta_movement)
+        self.__update_score__()
 
-                return self.features
-    # features
+        p1_x, p1_y, p1_dead = self.__grab_coordinates__(p1h, self.p1_x_addr, self.p1_y_addr)
+        p2_x, p2_y, p2_dead = self.__grab_coordinates__(p2h, self.p2_x_addr, self.p2_y_addr)
+
+        self.__features_switching_killswitch__(p2_dead)
+        self.__features_switching_killswitch__(p1_dead)
+
+        locations = self.__location_features__(p1_x, p2_x, p1_y, p2_y, self.switch)
+        current_direction = self.__update_current_direction__(self.__last_move_direction__)
+        delta_movement = self.__movement_deltas__(p1_x, p2_x, p1_y, p2_y, self.switch)
+
+        if self.switch is False:
+            # don't change health because changed earlier
+            self.features = [p1h, p1_x, p1_y,
+                             p2h, p2_x, p2_y]
+        else:
+            self.features = [p1h, p2_x, p2_y,
+                             p2h, p1_x, p1_y]
+
+        self.features.extend(locations)
+        self.features.extend([cd.gunonetimer, cd.guntwotimer])
+        self.features.extend(current_direction)
+        self.features.extend(delta_movement)
+
+        # delete unnecessary features
+        del self.features[-1]
+        del self.features[-1]
+        del self.features[-1]
+        del self.features[-1]
+        del self.features[3]
+        del self.features[0]
+
+        return self.features
+
     def __movement_deltas__(self, p1_x, p2_x, p1_y, p2_y, switch):
         if switch is False:
             p1_x_move = p1_x - self.prev_coordinates[0]
@@ -208,7 +227,12 @@ class Environment(object):
 
     # features
     def __location_features__(self, p1_x, p2_x, p1_y, p2_y, switch):
-        # logic for if cpu player is right, left,
+        '''
+        creates a list of dummy variables
+        indicating where p2 is in relation
+        to p1.
+        '''
+        logic for if cpu player is right, left,
         # above or below current location
         if switch is False:
             if p1_x > p2_x:
@@ -272,21 +296,30 @@ class Environment(object):
 
         return [right_of, left_of, above, below, x_clear, y_clear]
 
-    # features
     def observation(self):
+        '''
+        PRODUCTION STRENGTH
+        Pulls the Square Brawl features
+        and returns them as a list
+        '''
         try:
             try:
-                #self.prev_obs = self.features
                 self.__grab_addresses__()
             except:
                 pass
             feat = self.__grab_features__()
             return feat
         except AttributeError:
-            print('Not attached to game memory. Run initialize_memory() first.')
+            print('Not attached to game memory. Run initialize_memory() first')
 
     def create_predictions(self, observation):
-    # append all actions for feeding in predictive model
+        '''
+        For RL model that takes 1 observation
+        and returns one prediction. Duplicates
+        the input by the number of actions the
+        agent can take in the environment. Returns
+        a list of list for model prediction
+        '''
         actions = [0, 1, 2, 3, 4, 5, 6, 7]
         predictions = []
         for num in actions:
@@ -296,6 +329,12 @@ class Environment(object):
         return predictions
 
     def action(self, move, delay=0.05):
+        '''
+        Controller has to input multiple
+        variables at once. This function
+        simplies the controller inputs
+        by selecting actions from 0 to 7
+        '''
         self._actions = 8
         if move < 5:
             self.__last_move_direction__ = move
@@ -354,7 +393,8 @@ class Environment(object):
 
     def reward_structure(self, p1_death, p2_death, p1_damage, p2_damage):
         '''
-        sets how much we want to value deaths/damage
+        Sets the values used in the reward
+        structure for our agent
         '''
         self.p1_death = p1_death
         self.p2_death = p2_death
@@ -364,7 +404,9 @@ class Environment(object):
 
     def action_checker(self, action, reward, cooldownstates):
         '''
-        confirms that we append the right state to the action
+        Depreciated - if opponent dies,
+        agent could only get rewards
+        when weapons were on cooldown
         '''
         if reward <= 0:
             return action
@@ -375,6 +417,12 @@ class Environment(object):
                 return 7
 
     def reward(self, stale_observation, new_observation):
+        '''
+        Calculates the amount of reward our
+        agent is set to recieve based on the
+        reward structure and the difference
+        between last state and current.
+        '''
         rewards = []
         p1h_old = stale_observation[0]
         p1h_new = new_observation[0]
@@ -407,18 +455,24 @@ class Environment(object):
         except AttributeError:
             print('Define the reward structure with reward_structure')
 
-    def action_decay(self, last_action, move_list, decay_rate=0.11, fire_decay=True):
-            del move_list[0]
-            move_list.append(last_action)
-            decay = [(decay_rate**(i+2)) for i in range(len(move_list), -1, -1)]
-            d = dict(zip(move_list, decay))
-            all_moves = [0, 1, 2, 3, 4, 5, 6, 7]
+    def action_decay(self, last_action, move_list,
+                     decay_rate=0.11, fire_decay=True):
+        '''
+        Depreciated - used to devalue the
+        predicted value for each move when
+        based on how recently it was performed
+        '''
+        del move_list[0]
+        move_list.append(last_action)
+        decay = [(decay_rate**(i+2)) for i in range(len(move_list), -1, -1)]
+        d = dict(zip(move_list, decay))
+        all_moves = [0, 1, 2, 3, 4, 5, 6, 7]
 
-            for move in all_moves:
-                if move not in list(d.keys()):
-                    d[move] = 0
-            if fire_decay:
-                fire_decay = [0, 1, 2, 3, 4, 5]
-                for move in fire_decay:
-                    d[move] = 0
-            return d
+        for move in all_moves:
+            if move not in list(d.keys()):
+                d[move] = 0
+        if fire_decay:
+            fire_decay = [0, 1, 2, 3, 4, 5]
+            for move in fire_decay:
+                d[move] = 0
+        return d
