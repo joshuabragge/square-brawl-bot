@@ -7,37 +7,6 @@ CONST_DLL_VJOY = locations.CONST_DLL_VJOY
 
 '''
 modified from: https://gist.github.com/varlen/c47e807e647cc56a6faf9d548d2c00f3
-
-----vJoy Settings-----
-Axis: X and Y
-POVs: Continuous / 0
-Effects: Disabled
-Number of Buttons: 8
-----------------------
-
------x360 Controller Settings-------
-Settings <--> auto
-Button Mappings:
-0 = None
-1 = X
-2 = A
-4 = B
-16 = LS
-32 = RS
-64 = LT
-128 = LR
-------------------------------------
-
------------vJoy Axis--------
-
-wAxisY
-wAxisX
-
-(0,0) = top left
-(16000,16000) = centered
-(32000, 32000) = bottom right
-
-------------------------
 '''
 
 
