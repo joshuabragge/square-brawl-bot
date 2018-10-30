@@ -15,7 +15,7 @@ This project was an attempt at building an agent that learns how to play the gam
 [Presentation from my June 2017 Data Science meetup in Edmonton](https://docs.google.com/presentation/d/16ZBFpQT-BC_qZXr5dKvbdH96KqMWQ5ICcVfmvSZBXBs/edit?usp=sharing)
 
 ## Project Results
-I was unable to get beat my benchmark.
+I was unable to beat the random agent benchmark.
 
 1. Not enough information in features: four raw features, thirteen extrapolated
 2. Poor quality data: features switching in memory, agent is blind for 3 seconds after deaths, agent can’t see bullets
